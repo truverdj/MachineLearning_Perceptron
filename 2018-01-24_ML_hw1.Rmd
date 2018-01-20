@@ -172,5 +172,8 @@ vnorm = function(x){sqrt(sum(x^2))}
 train_norms = apply(x_train, 1, vnorm)
 x_train = x_train/max(train_norms)
 # recode the response so 9 is 1, 4 is -1
+recode_1 = which(y_train == 9)
+y_train[recode_1] = 1
+y_train[-recode_1] = -1
 
 ```
