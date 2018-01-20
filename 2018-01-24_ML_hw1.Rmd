@@ -113,7 +113,7 @@ The perceptron initializes at $w^{(0)} = 0 $, so $||w^{(0)} - w^{sep}||_2^2 = ||
 
 #### Programming Assignment (using R)  
 
-Oh dear, data loading.  
+Oh dear, data loading and data cleaning.  
 
 ```{r loadMNIST}
 # special thanks to: https://gist.github.com/brendano/39760
@@ -155,4 +155,22 @@ load_mnist <- function() {
 load_mnist()
 ```
 
-Now that we're done with the worst part--dear god, 200MB of memory--we proceed with the actual assignment. 
+Now that we're done with the worst loading--dear god, 200MB of memory--we proceed with data cleaning.  
+
+```{r cleanMNIST}
+# get observations of 4 or 9
+keep_train = (train$y == 4 | train$y == 9) 
+keep_test = (test$y == 4 | test$y == 9)
+# subset the data
+x_train = train$x[keep_train,]
+y_train = train$y[keep_train] 
+
+x_test = test$x[keep_test,]
+y_test = test$y[keep_test]
+# norm function
+vnorm = function(x){sqrt(sum(x^2))}
+train_norms = apply(x_train, 1, vnorm)
+x_train = x_train/max(train_norms)
+# recode the response so 9 is 1, 4 is -1
+
+```
