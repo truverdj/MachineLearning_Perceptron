@@ -1,0 +1,61 @@
+---
+title: "Machine Learning HW1 (Perceptron & Winnow)"
+author: "Daniel Truver"
+date: "2018/01/24"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+##### Perceptron Algorithm and Convergence Analysis
+
+(1) We consider Boolean functions $f: \{0,1\}^n \rightarrow \{0,1\} $
+(a) Consider
+
+$$
+y = f(x_1, x_2) = x_1 \text{ AND } x_2 = x_1 \cdot x_2
+$$
+
+Then, $y = 1$ iff $x_1 = x_2 = 1$. We can separate these points with a line in the plane.
+
+```{r, echo=FALSE}
+x_1 = c(0,0,1,1)
+x_2 = c(0,1,0,1)
+y = x_1*x_2
+y_labs = paste0("y = ", y)
+ggplot(data = data.frame(x_1, x_2, y_labs), aes(x = x_1, y = x_2)) +
+  geom_point() + 
+  geom_label(aes(label = y_labs), nudge_y = 0.1) + 
+  geom_abline(slope = -1, intercept = 1.5, color = "red")+
+  ggtitle("Function (x_1 AND x_2) with Separator (in red)")+
+  xlim(0,1.2) +
+  ylim(0,1.2) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+```
+
+(b) Consider
+
+$$
+y = f(x_1, x_2) = x_1 \text{ XOR } x_2 = x_1 + x_2 \text{(mod 2)}
+$$
+
+Then, for $(x_1, x_2) \in \{0,1\}^2 $, $y = 1$ iff $x_1 \neq x_2$. Graphically, we can see there is no separator for points where $y = 0$ and $y=1$ since $(0,1), (1,0)$ are colinear with $(0,0), (1,1)$ on opposite sides of the shared line. 
+
+```{r}
+y = (x_1 + x_2) %% 2
+x_prime = exp(y)
+y_labs = paste0("y = ", y)
+ggplot(data = data.frame(x_1, x_2, y_labs), aes(x_1, x_2)) + 
+  geom_point() + 
+  geom_abline(slope = -1, intercept = 1, color = "red")+
+  geom_label(aes(label = y_labs), nudge_y = 0.1) + 
+  ggtitle("Function (x_1 XOR x_2) with Illustration of Non-separability")+
+  xlim(0,1.2) +
+  ylim(0,1.2) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+```
