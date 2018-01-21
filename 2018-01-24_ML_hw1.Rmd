@@ -362,3 +362,9 @@ trapezoids.third = lapply(2:N, # get areas of all our trapezoids
                          })
 AUC.prime = sum(unlist(trapezoids.third))
 ```
+
+AUC for $w^*$ is `r AUC.star`.  
+AUC for $w'$ is `r AUC.prime`.  
+
+These results are in line with the ROC curves we obtained in the previous section: $w^*$ has better performance than $w'$. They are very close, however, suggesting that the perceptron is converging quickly to its final state.  
+
