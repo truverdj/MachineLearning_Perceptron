@@ -287,4 +287,25 @@ knitr::kable(confusion,
 ```  
   
   
-The accuracy after the last epoch is `r (confusion[1,1] + confusion[2,2])/n_test `.
+The accuracy after the last epoch is `r (confusion[1,1] + confusion[2,2])/n_test `.  
+
+(d)
+```{r oneThirdRun}
+# instead of modifying the function and risk breaking it...
+# we'll just extract the first third of the training data and run 1 epoch
+third.train = floor(n_train/3)
+x_train.third = x_train[1:third.train,]
+y_train.third = y_train[1:third.train]
+res_third = perceptron(x_train.third, y_train.third, I = 1)
+w.prime = res_third$w
+# For the sake of curiosity, we're going to bump I to 200; do not expect much change
+res_train = perceptron(x_train, y_train, I = 200)
+w.star = res_train$w
+```  
+
+```{r wPrimeVSw}
+results.third = sign(x_train %*% w.prime)
+results.full = sign(x_train %*% w.star)
+conf.third = data.frame(matrix(NA, 2, 2))
+conf.full = data.frame(matrix(NA, 2, 2))
+```
