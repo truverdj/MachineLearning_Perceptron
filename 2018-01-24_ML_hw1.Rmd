@@ -304,8 +304,61 @@ w.star = res_train$w
 ```  
 
 ```{r wPrimeVSw}
-results.third = sign(x_train %*% w.prime)
-results.full = sign(x_train %*% w.star)
-conf.third = data.frame(matrix(NA, 2, 2))
-conf.full = data.frame(matrix(NA, 2, 2))
+#check n_b values for the threshold b
+n_b = 100
+ROC.third.matrix = data.frame(matrix(NA, nrow = n_b, ncol = 2))
+colnames(ROC.third.matrix) = c("TPR", "FPR")
+ROC.full.matrix = data.frame(matrix(NA, nrow = n_b, ncol = 2))
+colnames(ROC.full.matrix) = c("TPR", "FPR")
+i = 1
+for (b in seq(-5, 5, length.out = n_b)){
+  results.third = sign(x_train %*% w.prime - b)
+  results.full = sign(x_train %*% w.star - b)
+  # get the confusion matrix entries
+  TP.full = sum(results.full == 1 & results.full == y_train)
+  FP.full = sum(results.full == 1 & results.full != y_train)
+  FN.full = sum(results.full == -1 & results.full != y_train)
+  TN.full = sum(results.full == -1 & results.full == y_train)
+  
+  TP.third = sum(results.third == 1 & results.third == y_train)
+  FP.third = sum(results.third == 1 & results.third != y_train)
+  FN.third = sum(results.third == -1 & results.third != y_train)
+  TN.third = sum(results.third == -1 & results.third == y_train)
+  #store in matrix for later plotting
+  ROC.full.matrix[i,"TPR"] = TPR.full = TP.full/(TP.full + FN.full)
+  ROC.full.matrix[i,"FPR"] = FPR.full = FP.full/(FP.full + TN.full)
+  
+  ROC.third.matrix[i,"TPR"] = TPR.third = TP.third/(TP.third + FN.third)
+  ROC.third.matrix[i,"FPR"] = FPR.third = FP.third/(FP.third + TN.third)
+  i = i + 1
+}
+```  
+
+```{r ROCplotting, echo=FALSE}
+ggplot(data = ROC.third.matrix, aes(x = FPR, y = TPR)) +
+  geom_line(aes(color = "w.prime")) + 
+  geom_line(data = ROC.full.matrix, aes(x = FPR, y = TPR, color = "w.star" )) +
+  ggtitle("ROC Curves for w.prime (trained on 1/3 of data) and w.star (all data)")+
+  geom_abline(intercept = 0, slope = 1, lty = "dashed") +
+  theme_bw()
+```
+
+We see from the graph, that the ROC curve for $w^*$ is always greater than or equal to the curve for $w'$. Therefore, if we use use $w^*$, we have to accept fewer false positives to reach a desired amount of true positives.  
+
+(e) Trapezoids with uneven intervals it is.
+
+```{r AUCapproximation}
+N = nrow(ROC.full.matrix) - 1
+trapezoids.full = lapply(2:N, # get areas of all our trapezoids
+                         function(i){
+                           (ROC.full.matrix[i-1,"FPR"] - ROC.full.matrix[i,"FPR"])*
+                             (ROC.full.matrix[i-1,"TPR"] + ROC.full.matrix[i, "TPR"])/2
+                         })
+AUC.star = sum(unlist(trapezoids.full))
+trapezoids.third = lapply(2:N, # get areas of all our trapezoids
+                         function(i){
+                           (ROC.third.matrix[i-1,"FPR"] - ROC.third.matrix[i,"FPR"])*
+                             (ROC.third.matrix[i-1,"TPR"] + ROC.third.matrix[i, "TPR"])/2
+                         })
+AUC.prime = sum(unlist(trapezoids.third))
 ```
