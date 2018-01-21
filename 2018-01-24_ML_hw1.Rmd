@@ -175,5 +175,45 @@ x_train = x_train/max(train_norms)
 recode_1 = which(y_train == 9)
 y_train[recode_1] = 1
 y_train[-recode_1] = -1
+n_train = length(y_train)
+#testing set
+test_norms = apply(x_test, 1, vnorm)
+x_test = x_test/max(test_norms)
+#recode test response
+recode_1 = which(y_test == 9)
+y_test[recode_1] = 1
+y_test[-recode_1] = -1
+n_test = length(y_test)
+```
 
+Now that the data is in the format we like, $||x_i||_2 \leq 1, y \in \{-1,1\}$, we can get started on the perceptron.  
+
+```{r perceptronFunction}
+perceptron = function(X, y, I){
+  accuracy_epoch = data.frame(matrix(NA, nrow = I, ncol = 2)) # accuracy-epoch matrix
+  colnames(accuracy_epoch) = c("accuracy", "epoch")
+  W = matrix(NA, nrow = I, ncol = ncol(X))
+  w = rep(0, dim(X)[2])
+  for (j in 1:I){
+    for (i in seq_along(y)){
+      if (y[i]*(w %*% X[i,])){
+        w = w + y[i]*X[i,] # update step
+      }
+    }
+    accuracy = sum((X %*% w) * y > 0)/length(y) # calculate propotion of correctly classified points
+    if (accuracy == 1){ 
+      break # no need to continue if we have perfect separation
+    } 
+    accuracy_epoch[j, "accuracy"] = accuracy
+    accuracy_epoch[j, "epoch"] = j 
+    W[j,] = w
+  }
+  return(list("a.e" = accuracy_epoch, "w" = w, "W" = W))
+}
+```
+
+(a) Running the perceptron on the training set.  
+
+```{r perceptronTraining}
+res_train = perceptron(X = x_train, y = y_train, I = 100)
 ```
