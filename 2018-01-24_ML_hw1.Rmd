@@ -188,6 +188,8 @@ n_test = length(y_test)
 
 Now that the data is in the format we like, $||x_i||_2 \leq 1, y \in \{-1,1\}$, we can get started on the perceptron.  
 
+##### (1) Perceptron
+
 ```{r perceptronFunction}
 perceptron = function(X, y, I){
   accuracy_epoch = data.frame(matrix(NA, nrow = I, ncol = 2)) # accuracy-epoch matrix
@@ -363,8 +365,38 @@ trapezoids.third = lapply(2:N, # get areas of all our trapezoids
 AUC.prime = sum(unlist(trapezoids.third))
 ```
 
-AUC for $w^*$ is `r AUC.star`.  
-AUC for $w'$ is `r AUC.prime`.  
+AUC for $w^*$ is `r round(AUC.star,4)`.  
+AUC for $w'$ is `r round(AUC.prime,4)`.  
 
 These results are in line with the ROC curves we obtained in the previous section: $w^*$ has better performance than $w'$. They are very close, however, suggesting that the perceptron is converging quickly to its final state.  
 
+##### (2) Balanced Winnow  
+
+```{r balancedWinnow}
+balanced_winnow = function(X, y, I, eta = 1){
+  p = ncol(X)
+  accuracy_epoch = data.frame(matrix(NA, nrow = I, ncol = 2))
+  colnames(accuracy_epoch) = c("accuracy", "epoch")
+  W_n = matrix(NA, nrow = I, ncol = ncol(X))
+  W_p = matrix(NA, nrow = I, ncol = ncol(X))
+  w_p = w_n = rep(.5/p, p)
+  for (j in 1:I){
+    for (i in 1:nrow(X)) {
+      if (( y[i] * (w_p %*% X[i,] - w_n %*% X[i,]) ) <= 0 ){
+        w_p = w_p * exp(eta*y[i]*X[i,])
+        w_n = w_n * exp(-eta*y[i]*X[i,])
+        s = sum(w_n + w_p)
+        w_p = w_p/s
+        w_n = w_n/s
+      }
+    }
+    accuracy = sum((X %*% (w_p - w_n)) * y > 0)/length(y) # calculate propotion of correctly classified points
+    accuracy_epoch[j, "accuracy"] = accuracy
+    accuracy_epoch[j, "epoch"] = j 
+    W_p[j,] = w_p
+    W_n[j,] = w_n
+  }
+  return(list("a.e" = accuracy_epoch, "w_p" = w_p,
+              "w_n" = w_n, "W_n" = W_n, "W_p" = W_p))
+}
+```
