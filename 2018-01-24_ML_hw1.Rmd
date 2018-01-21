@@ -196,17 +196,17 @@ perceptron = function(X, y, I){
   w = rep(0, dim(X)[2])
   for (j in 1:I){
     for (i in seq_along(y)){
-      if (y[i]*(w %*% X[i,])){
+      if (y[i]*(w %*% X[i,]) <= 0){
         w = w + y[i]*X[i,] # update step
       }
     }
     accuracy = sum((X %*% w) * y > 0)/length(y) # calculate propotion of correctly classified points
-    if (accuracy == 1){ 
-      break # no need to continue if we have perfect separation
-    } 
     accuracy_epoch[j, "accuracy"] = accuracy
     accuracy_epoch[j, "epoch"] = j 
     W[j,] = w
+    if (accuracy == 1){ 
+      break # no need to continue if we have perfect separation
+    } 
   }
   return(list("a.e" = accuracy_epoch, "w" = w, "W" = W))
 }
@@ -217,3 +217,74 @@ perceptron = function(X, y, I){
 ```{r perceptronTraining}
 res_train = perceptron(X = x_train, y = y_train, I = 100)
 ```
+
+That was faster than expected, let's look at these delicious accuracy-epoch plots.  
+
+```{r accuracyPlotTraining, echo=FALSE}
+g1 = ggplot(data = res_train$a.e, aes(x = epoch, y = accuracy)) +
+  geom_line() + 
+  ggtitle("How Accuracy Changes w.r.t. Epoch", subtitle = "Training Data") +
+  theme_bw() +
+  xlab("Epoch") + 
+  ylab("Accuracy") +
+  ylim(0,1) +
+  geom_hline(yintercept = min(res_train$a.e$accuracy), lty = "dashed") + 
+  geom_hline(yintercept = max(res_train$a.e$accuracy), lty = "dashed")
+g1
+```
+
+Suprisingly, at least to me, we see here that accuracy is quite high after 1 epoch, not monotonic, and stays close to 0.96. The actual range is [`r min(res_train$a.e$accuracy)`,`r max(res_train$a.e$accuracy)`]. It reaches its maximum value at epoch `r which.max(res_train$a.e$accuracy) ` and its minimum at epoch `r which.min(res_train$a.e$accuracy) `. From this plot, it does not seem that increasing or decreasing the maximum number of epochs will have much of an effect on the accuracy. Hmm...suspicious.  
+
+(b) Since this is the test set, and I'm usually a test set purist, I'm going to interpret the question to mean we take the values of $w$ obtained from training the perceptron and see how well they classify the test set, without actually training a new perceptron on the test set. Well, what do you know? We conveniently kept a copy of $w$ at each epoch.  
+
+```{r testAccuracy}
+W = res_train$W
+n_epoch = 1:nrow(W)
+accuracy_test = lapply(n_epoch, 
+                       function(j){ 
+                         sum(y_test * (x_test %*% W[j,]) > 0)/n_test #check accuracy via dot product
+                         }
+                       )
+a.eTest = data.frame("accuracy.test" = unlist(accuracy_test),
+                     "epoch.test" = n_epoch)
+```
+
+```{r plotTestAccuracy, echo=FALSE}
+g1 +
+  geom_line(data = a.eTest, aes(x = epoch.test, y = accuracy.test),
+            color = "red") +
+  geom_hline(yintercept = min(a.eTest$accuracy), color = "red", lty = "dashed") +
+  geom_hline(yintercept = max(a.eTest$accuracy), color = "red", lty = "dashed") +
+  ylim(0.90,1) +
+  ggtitle("How Accuracy Changes w.r.t. Epoch (zoomed)", 
+          subtitle = "Test Data added in red") +
+  theme(plot.subtitle = element_text(color = "red")) 
+```
+
+The accuracy for the test data is generally lower than the accuracy for the training data, but the curves are very close; they tend to follow the same pattern of increasing and decreasing as well. 
+
+(c) The confusion matrix is how I refer to my brain in private.  
+
+```{r}
+w = res_train$w # last w obtained from training the perceptron
+our.results = rep(NA, length(y_test))
+# get results on test data
+our.results[(x_test %*% w > 0)] = 1
+our.results[(x_test %*% w <= 0)] = -1
+# initialize confusion matix
+confusion = data.frame(matrix(NA, nrow = 2, ncol = 2))
+colnames(confusion) = c("actual.yes", "actual.no")
+rownames(confusion) = c("predicted.yes", "predicted.no")
+# fill in confusion matrix
+confusion["predicted.yes", "actual.yes"] = sum(our.results == 1 & our.results == y_test)
+confusion["predicted.yes", "actual.no"] = sum(our.results == 1 & our.results != y_test)
+confusion["predicted.no", "actual.no"] = sum(our.results == -1 & our.results == y_test)
+confusion["predicted.no", "actual.yes"] = sum(our.results == -1 & our.results != y_test)
+nameTheColumns = c("Actual Yes, y = 1", "Actual No, y = -1")
+knitr::kable(confusion, 
+             col.names = nameTheColumns,
+             caption = "Confusion Matrix for Test Data")
+```  
+  
+  
+The accuracy after the last epoch is `r (confusion[1,1] + confusion[2,2])/n_test `.
