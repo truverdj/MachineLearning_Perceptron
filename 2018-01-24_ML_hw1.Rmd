@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(scatterplot3d)
 library(dplyr)
+library(gridExtra)
 ```
 
 #### Perceptron Algorithm and Convergence Analysis
@@ -216,7 +217,7 @@ perceptron = function(X, y, I){
 
 (a) Running the perceptron on the training set.  
 
-```{r perceptronTraining}
+```{r perceptronTraining, cache=TRUE}
 res_train = perceptron(X = x_train, y = y_train, I = 100)
 ```
 
@@ -292,7 +293,7 @@ knitr::kable(confusion,
 The accuracy after the last epoch is `r (confusion[1,1] + confusion[2,2])/n_test `.  
 
 (d)
-```{r oneThirdRun}
+```{r oneThirdRun, cache=TRUE}
 # instead of modifying the function and risk breaking it...
 # we'll just extract the first third of the training data and run 1 epoch
 third.train = floor(n_train/3)
@@ -300,8 +301,7 @@ x_train.third = x_train[1:third.train,]
 y_train.third = y_train[1:third.train]
 res_third = perceptron(x_train.third, y_train.third, I = 1)
 w.prime = res_third$w
-# For the sake of curiosity, we're going to bump I to 200; do not expect much change
-res_train = perceptron(x_train, y_train, I = 200)
+res_train = perceptron(x_train, y_train, I = 100)
 w.star = res_train$w
 ```  
 
@@ -403,7 +403,7 @@ balanced_winnow = function(X, y, I, eta = 1){
 
 (a) Oh boy, another function, I can't wait to run it.  
 
-```{r runningWinnow}
+```{r runningWinnow, cache=TRUE}
 confusion.matrix = function(predicted, actual){ # I finally get smart and write a function for this
   conf = data.frame(matrix(NA, 2, 2))
   colnames(conf) = c("actual.yes", "actual.no")
@@ -422,17 +422,45 @@ accuracy_test = sum(y_test * res_test > 0)/n_test
 conf.test = confusion.matrix(predicted = res_test, actual = y_test)
 ```
 
-```{r reportResults}
+```{r reportResults, echo=FALSE}
 ggplot(data = res_train.winnow$a.e, aes(x = epoch, y = accuracy)) +
   geom_line() +
   geom_hline(yintercept = min(res_train.winnow$a.e$accuracy), lty = "dashed") +
   geom_hline(yintercept = max(res_train.winnow$a.e$accuracy), lty = "dashed") +
   ggtitle("Accuracy w.r.t. Epoch for the Balanced Winnow on Training Set",
           subtitle = "Perceptron in red for comparison") +
-  theme(plot.subtitle = element_text(color = "red")) + 
-  geom_line(data = res_train$a.e, color = "red", lty = "dotted")
+  geom_line(data = res_train$a.e, color = "red", lty = "dotted") +
   theme_bw() +
+  theme(plot.subtitle = element_text(color = "red")) + 
   ylim(0.75,1)
 cat("Accuracy for test data:", round(accuracy_test, 4))
-knitr::kable(conf.test, col.names = c("Actual Yes", "Actual No"))
+knitr::kable(conf.test, col.names = c("Actual Yes", "Actual No"),
+             caption = "Confusion Matrix for Balanced Winnow (test data)")
+```  
+
+(b) Well, the only way I know of to test different values of the parameter $\eta$ is to make a list of possible values and throw them all into the function to see which one gives the best accuracy at the end. Or, as I like to call it, the "head meet wall repeatedly" method.  
+
+```{r testingEta, cache=TRUE}
+ETA = c(0.5, 1, 1.5, 2)
+plot.list = list()
+for (eta in ETA){
+  res = balanced_winnow(x_train, y_train, 50, eta) # 50 epochs for the sake of time
+  g = ggplot(data = res$a.e, aes(x = epoch, y = accuracy)) +
+    geom_line() + 
+    geom_hline(yintercept = min(res$a.e$accuracy), lty = "dashed") +
+    geom_hline(yintercept = max(res$a.e$accuracy), lty = "dashed") +
+    ggtitle("Accuracy w.r.t. Epoch", 
+            subtitle = paste0("eta = ", eta)) +
+    theme_bw() + 
+    ylim(.75,1)
+  plot.list[[which(ETA == eta)]] = g
+}
 ```
+
+```{r plottingEta, echo=FALSE}
+grid.arrange(plot.list[[1]], plot.list[[2]],
+             plot.list[[3]], plot.list[[4]],
+             ncol = 2)
+```
+
+There do not seem to be many differences in the accuracy between these values of $\eta$. The optimal $\eta$ is probably $1/e$ because when in doubt, that always seems to be a reasonable guess. Or something equally as obscure and unexpected. 
