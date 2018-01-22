@@ -93,7 +93,8 @@ y_labs = paste0("y = ", y)
 
 #####(2)
 
-Since our classifier is $sign(f(x))$, the decision boundary is the hyperplane $0 = \beta_0 + \beta^Tx = \beta_0 + \beta_1x_1 + \dots + \beta_px_p$. From calculus, at least for me, we know the distance between a point $x_0$ and a hyperplane is the projection of $x - x_0$, for $x$ in the plane, onto the normal vector of the plane, here given by $\beta$. Let $B$ denote the decision boundary, $x$ denote a point on $B$, and $x_0$ denote an fixed point. The signed Euclidean distance is then:
+Since our classifier is $sign(f(x))$, the decision boundary is the hyperplane $0 = \beta_0 + \beta^Tx = \beta_0 + \beta_1x_1 + \dots + \beta_px_p$. From calculus, at least for me, we know the distance between a point $x_0$ and a hyperplane is the projection of $x_0 - x$, for $x$ in the plane, onto the normal vector of the plane, here given by $\beta$. Let $B$ denote the decision boundary, $x$ denote a point on $B$, and $x_0$ denote an fixed point. The signed Euclidean distance is then:  
+
 $$
 \begin{aligned}
 D(x_0, B) 
@@ -110,11 +111,11 @@ Multiplying both sides by $y$, since $y$ is given for $x$ in this problem, we ge
 #####(3)
 I feel like I'm missing something here.  
 
-The perceptron initializes at $w^{(0)} = 0 $, so $||w^{(0)} - w^{sep}||_2^2 = ||w^{sep}||^2_2 $. If we normalize $w^{sep}$ by dividing by its magnitude and recaculate the margin, then we get $y_i(x_i\cdot w^{sep})/||w^{sep}||_2 \geq 1/||w^{sep}|| $ and we have met the conditions of the perceptron convergence bound theorem proved in class. Note, even if $\exists i : ||x_i|| > 1$, rescaling would change the bound to $1/(||w^{sep}||\cdot ||x_i||) < 1/||w^{sep}|| $, so $1/||w^{sep}||$ is still a bound, and the theorem gives us $T < ||w^{sep}||^2$, what was to be shown.  
+The perceptron initializes at $w^{(0)} = 0 $, so $||w^{(0)} - w^{sep}||_2^2 = ||w^{sep}||^2_2 $. If we normalize $w^{sep}$ by dividing by its magnitude and recaculate the margin, then we get $y_i(x_i\cdot w^{sep})/||w^{sep}||_2 \geq 1/||w^{sep}|| $ and we have met the conditions of the perceptron convergence bound theorem proved in class. Note, even if $\exists i : ||x_i|| > 1$, rescaling would change the bound to $1/(||w^{sep}||\cdot ||x_i||) < 1/||w^{sep}|| $, so $1/||w^{sep}||$ is still an upper bound, and the theorem gives us $T < ||w^{sep}||^2$, what was to be shown.  
 
 #### Programming Assignment (using R)  
 
-Oh dear, data loading and data cleaning.  
+Oh dear, data loading and data cleaning. Let's just do a quick Google search to see if anyone knows how to handle these file types in R. 
 
 ```{r loadMNIST}
 # special thanks to: https://gist.github.com/brendano/39760
@@ -156,7 +157,7 @@ load_mnist <- function() {
 load_mnist()
 ```
 
-Now that we're done with the worst loading--dear god, 200MB of memory--we proceed with data cleaning.  
+Now that we're done with the loading--dear god, 200MB of memory--we proceed with data cleaning.  
 
 ```{r cleanMNIST}
 # get observations of 4 or 9
@@ -236,7 +237,7 @@ g1 = ggplot(data = res_train$a.e, aes(x = epoch, y = accuracy)) +
 g1
 ```
 
-Suprisingly, at least to me, we see here that accuracy is quite high after 1 epoch, not monotonic, and stays close to 0.96. The actual range is [`r min(res_train$a.e$accuracy)`,`r max(res_train$a.e$accuracy)`]. It reaches its maximum value at epoch `r which.max(res_train$a.e$accuracy) ` and its minimum at epoch `r which.min(res_train$a.e$accuracy) `. From this plot, it does not seem that increasing or decreasing the maximum number of epochs will have much of an effect on the accuracy. Hmm...suspicious.  
+Suprisingly, at least to me, we see here that accuracy is quite high after 1 epoch, not monotonic, and stays close to 0.96. The actual range is [`r round(min(res_train$a.e$accuracy),4)`,`r round(max(res_train$a.e$accuracy),4)`]. It reaches its maximum value at epoch `r which.max(res_train$a.e$accuracy) ` and its minimum at epoch `r which.min(res_train$a.e$accuracy) `. From this plot, it does not seem that increasing or decreasing the maximum number of epochs will have much of an effect on the accuracy. Hmm...suspicious.  
 
 (b) Since this is the test set, and I'm usually a test set purist, I'm going to interpret the question to mean we take the values of $w$ obtained from training the perceptron and see how well they classify the test set, without actually training a new perceptron on the test set. Well, what do you know? We conveniently kept a copy of $w$ at each epoch.  
 
@@ -438,7 +439,7 @@ knitr::kable(conf.test, col.names = c("Actual Yes", "Actual No"),
              caption = "Confusion Matrix for Balanced Winnow (test data)")
 ```  
 
-(b) Well, the only way I know of to test different values of the parameter $\eta$ is to make a list of possible values and throw them all into the function to see which one gives the best accuracy at the end. Or, as I like to call it, the "head meet wall repeatedly" method.  
+(b) Well, the only way I know of to test different values of the parameter $\eta$ is to make a list of possible values and throw them all into the function to see which one gives the best accuracy at the end. Known colloquially as the "head meet wall" method.  
 
 ```{r testingEta, cache=TRUE}
 ETA = c(0.5, 1, 1.5, 2)
