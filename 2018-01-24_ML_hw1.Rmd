@@ -404,9 +404,35 @@ balanced_winnow = function(X, y, I, eta = 1){
 (a) Oh boy, another function, I can't wait to run it.  
 
 ```{r runningWinnow}
-res_train = balanced_winnow(x_train, y_train, I = 100)
-w_p = res_train$w_p
-w_n = res_train$w_n
+confusion.matrix = function(predicted, actual){ # I finally get smart and write a function for this
+  conf = data.frame(matrix(NA, 2, 2))
+  colnames(conf) = c("actual.yes", "actual.no")
+  rownames(conf) = c("predicted.yes", "predicted.no")
+  conf["predicted.yes", "actual.yes"] = sum(predicted == 1 & predicted == actual)
+  conf["predicted.yes", "actual.no"] = sum(predicted == 1 & predicted != actual)
+  conf["predicted.no", "actual.yes"] = sum(predicted == -1 & predicted != actual)
+  conf["predicted.no", "actual.no"] = sum(predicted == -1 & predicted == actual)
+  return(conf)
+}
+res_train.winnow = balanced_winnow(x_train, y_train, I = 100)
+w_p = res_train.winnow$w_p
+w_n = res_train.winnow$w_n
 res_test = sign(x_test %*% (w_p - w_n))
+accuracy_test = sum(y_test * res_test > 0)/n_test
+conf.test = confusion.matrix(predicted = res_test, actual = y_test)
+```
 
+```{r reportResults}
+ggplot(data = res_train.winnow$a.e, aes(x = epoch, y = accuracy)) +
+  geom_line() +
+  geom_hline(yintercept = min(res_train.winnow$a.e$accuracy), lty = "dashed") +
+  geom_hline(yintercept = max(res_train.winnow$a.e$accuracy), lty = "dashed") +
+  ggtitle("Accuracy w.r.t. Epoch for the Balanced Winnow on Training Set",
+          subtitle = "Perceptron in red for comparison") +
+  theme(plot.subtitle = element_text(color = "red")) + 
+  geom_line(data = res_train$a.e, color = "red", lty = "dotted")
+  theme_bw() +
+  ylim(0.75,1)
+cat("Accuracy for test data:", round(accuracy_test, 4))
+knitr::kable(conf.test, col.names = c("Actual Yes", "Actual No"))
 ```
