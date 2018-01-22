@@ -2,11 +2,13 @@
 title: "Machine Learning HW1 (Perceptron & Winnow)"
 author: "Daniel Truver"
 date: "2018/01/24"
-output: pdf_document
+output: 
+  pdf_document: 
+    keep_tex: yes
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(ggplot2)
 library(scatterplot3d)
 library(dplyr)
@@ -16,7 +18,10 @@ library(gridExtra)
 #### Perceptron Algorithm and Convergence Analysis
 
 #####(1) 
-We consider Boolean functions $f: \{0,1\}^n \rightarrow \{0,1\} $  
+We consider Boolean functions 
+$$
+f: \{0,1\}^n \rightarrow \{0,1\} 
+$$  
 (a) Consider  
 
 $$
@@ -49,7 +54,11 @@ $$
 y = f(x_1, x_2) = x_1 \text{ XOR } x_2 = x_1 + x_2 \text{(mod 2)}
 $$
 
-Then, for $(x_1, x_2) \in \{0,1\}^2 $, $y = 1$ iff $x_1 \neq x_2$. Graphically, we can see there is no separator for points where $y = 0$ and $y=1$ since $(0,1), (1,0)$ are colinear with $(0,0), (1,1)$ on opposite sides of the shared line.   
+Then, for 
+$$ 
+(x_1, x_2) \in \{0,1\} \times \{0,1\},\quad y = 1 \iff x_1 \neq x_2.
+$$ 
+ Graphically, we can see there is no separator for points where $y = 0$ and $y=1$ since $(0,1), (1,0)$ are colinear with $(0,0), (1,1)$ on opposite sides of the shared line.   
 
 ```{r, echo = FALSE}
 # coordinates have not changed, just y has
@@ -106,12 +115,28 @@ D(x_0, B)
 \end{aligned}
 $$
 
-Multiplying both sides by $y$, since $y$ is given for $x$ in this problem, we get $yD(x, B) = yf(x)/||\beta||_2 $. If $x$ is misclassified, then the sign of $y$ will differ from the sign of $f(x)$ and this value will be negative. Therefore, this quantity is the margin. 
+Multiplying both sides by $y$, since $y$ is given for $x$ in this problem, we get 
+$$ 
+yD(x, B) = yf(x)/||\beta||_2 .
+$$
+If $x$ is misclassified, then the sign of $y$ will differ from the sign of $f(x)$ and this value will be negative. Therefore, this quantity is the margin. 
 
 #####(3)
 I feel like I'm missing something here.  
 
-The perceptron initializes at $w^{(0)} = 0 $, so $||w^{(0)} - w^{sep}||_2^2 = ||w^{sep}||^2_2 $. If we normalize $w^{sep}$ by dividing by its magnitude and recaculate the margin, then we get $y_i(x_i\cdot w^{sep})/||w^{sep}||_2 \geq 1/||w^{sep}|| $ and we have met the conditions of the perceptron convergence bound theorem proved in class. Note, even if $\exists i : ||x_i|| > 1$, rescaling would change the bound to $1/(||w^{sep}||\cdot ||x_i||) < 1/||w^{sep}|| $, so $1/||w^{sep}||$ is still an upper bound, and the theorem gives us $T < ||w^{sep}||^2$, what was to be shown.  
+The perceptron initializes at $w^{(0)} = 0 $, so $||w^{(0)} - w^{sep}||_2^2 = ||w^{sep}||^2_2 $. If we normalize $w^{sep}$ by dividing by its magnitude and recaculate the margin, then we get 
+$$
+y_i(x_i\cdot w^{sep})/||w^{sep}||_2 \geq 1/||w^{sep}|| 
+$$ 
+We have met the conditions of the perceptron convergence bound theorem proved in class. Note, even if $\exists i : ||x_i|| > 1$, rescaling would change the bound to 
+$$
+1/(||w^{sep}||\cdot ||x_i||) < 1/||w^{sep}||, 
+$$ 
+so $1/||w^{sep}||$ is still an upper bound, and the theorem gives us 
+$$
+T < ||w^{sep}||^2,
+$$ 
+what was to be shown.  
 
 #### Programming Assignment (using R)  
 
@@ -241,7 +266,7 @@ Suprisingly, at least to me, we see here that accuracy is quite high after 1 epo
 
 (b) Since this is the test set, and I'm usually a test set purist, I'm going to interpret the question to mean we take the values of $w$ obtained from training the perceptron and see how well they classify the test set, without actually training a new perceptron on the test set. Well, what do you know? We conveniently kept a copy of $w$ at each epoch.  
 
-```{r testAccuracy}
+```{r testAccuracy, message=FALSE}
 W = res_train$W
 n_epoch = 1:nrow(W)
 accuracy_test = lapply(n_epoch, 
