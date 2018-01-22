@@ -400,3 +400,13 @@ balanced_winnow = function(X, y, I, eta = 1){
               "w_n" = w_n, "W_n" = W_n, "W_p" = W_p))
 }
 ```
+
+(a) Oh boy, another function, I can't wait to run it.  
+
+```{r runningWinnow}
+res_train = balanced_winnow(x_train, y_train, I = 100)
+w_p = res_train$w_p
+w_n = res_train$w_n
+res_test = sign(x_test %*% (w_p - w_n))
+
+```
